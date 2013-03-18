@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+
+require 'flapjack-diner'
+require 'logger'
+
+Flapjack::Diner.base_uri('http://127.0.0.1:4091/')
+Flapjack::Diner.logger = Logger.new("logs/flapjack_diner.log")
+
+test_rule = '{
+  "contact_id": "21",
+  "entity_tags": [
+    "database",
+    "physical"
+  ],
+  "entities": [
+    "localhost"
+  ],
+  "time_restrictions": [
+    {
+      "TODO": "TODO"
+    }
+  ],
+  "warning_media": [
+    "email"
+  ],
+  "critical_media": [
+    "sms",
+    "email"
+  ],
+  "warning_blackhole": false,
+  "critical_blackhole": false
+}'
+test_email = '{
+  "address": "dmitri@example.com",
+  "interval": 900
+}'
+puts "all contacts: " +
+  Flapjack::Diner.contacts.inspect
+puts "a contact: " +
+  Flapjack::Diner.contacts(:contact_id => '21').inspect
+puts "create a new notification rule: " +
+  Flapjack::Diner.create_notification_rule(test_rule.to_json).inspect
+puts "a contact's notification rules: " +
+  Flapjack::Diner.contact_notification_rules(:contact_id => '21').inspect
+
+rule_id = Flapjack::Diner.contact_notification_rules(:contact_id => '21').last
+puts "picking on rule with id: #{rule_id}"
+
+puts "a notification rule: " +
+  Flapjack::Diner.notification_rules(:rule_id => rule_id).inspect
+puts "update a notification rule: " +
+  Flapjack::Diner.update_notification_rule!(:rule_id => rule_id).inspect
+puts "delete a notification rule: " +
+  Flapjack::Diner.delete_notification_rule!(:rule_id => rule_id).inspect
+puts "a contact's notification rules: " +
+  Flapjack::Diner.contact_notification_rules(:contact_id => '21').inspect
+
+puts "a contact's media: "
+  Flapjack::Diner.contact_media(:contact_id => '21').inspect
+puts "update a contact's email media: "
+  Flapjack::Diner.update_contact_media!(:contact_id => '21', :media_type => 'email', :address => "dmitri@example.com", :interval => 900).inspect
+puts "a contact's email media: "
+  Flapjack::Diner.contact_media(:contact_id => '21', :media_type => 'email').inspect
+puts "delete a contact's email media: "
+  Flapjack::Diner.delete_contact_media!(:contact_id => '21', :media_type => 'email').inspect
+
+puts "set a contact's timezone: " +
+  Flapjack::Diner.contact_set_timezone!('21', :timezone => 'Australia/Adelaide').inspect
+puts "a contact's timezone: " +
+  Flapjack::Diner.contact_timezone('21').inspect
+puts "delete a contact's timezone: " +
+  Flapjack::Diner.contact_delete_timezone!('21').inspect
+
