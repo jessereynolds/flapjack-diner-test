@@ -43,7 +43,8 @@ puts "create a new notification rule: " +
 puts "a contact's notification rules: " +
   Flapjack::Diner.contact_notification_rules(:contact_id => '21').inspect
 
-rule_id = Flapjack::Diner.contact_notification_rules(:contact_id => '21').last
+rules = Flapjack::Diner.contact_notification_rules(:contact_id => '21')
+rule_id = rules.last if rules
 puts "picking on rule with id: #{rule_id}"
 
 puts "a notification rule: " +
