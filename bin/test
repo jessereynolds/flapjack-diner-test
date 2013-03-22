@@ -39,7 +39,7 @@ puts "all contacts: " +
 puts "a contact: " +
   Flapjack::Diner.contacts(:contact_id => '21').inspect
 puts "create a new notification rule: " +
-  Flapjack::Diner.create_notification_rule(test_rule.to_json).inspect
+  Flapjack::Diner.create_notification_rule!(test_rule).inspect
 puts "a contact's notification rules: " +
   Flapjack::Diner.contact_notification_rules(:contact_id => '21').inspect
 
@@ -49,9 +49,9 @@ puts "picking on rule with id: #{rule_id}"
 puts "a notification rule: " +
   Flapjack::Diner.notification_rules(:rule_id => rule_id).inspect
 puts "update a notification rule: " +
-  Flapjack::Diner.update_notification_rule!(:rule_id => rule_id).inspect
+  Flapjack::Diner.update_notification_rule!(rule_id, test_rule).inspect
 puts "delete a notification rule: " +
-  Flapjack::Diner.delete_notification_rule!(:rule_id => rule_id).inspect
+  Flapjack::Diner.delete_notification_rule!(rule_id).inspect
 puts "a contact's notification rules: " +
   Flapjack::Diner.contact_notification_rules(:contact_id => '21').inspect
 
