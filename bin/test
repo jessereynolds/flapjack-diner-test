@@ -6,7 +6,9 @@ require 'logger'
 Flapjack::Diner.base_uri('http://127.0.0.1:4091/')
 Flapjack::Diner.logger = Logger.new("logs/flapjack_diner.log")
 
-test_rule = '{
+test_rule = {"contact_id"=>"21", "entity_tags"=>["database", "physical"], "entities"=>["localhost"], "time_restrictions"=>[{"start_time"=>"2013-01-28 08:00:00", "end_time"=>"2013-01-28 18:00:00", "rrules"=>[{"validations"=>{"day"=>[1, 2, 3, 4, 5]}, "rule_type"=>"Weekly", "interval"=>1, "week_start"=>0}], "exrules"=>[], "rtimes"=>[], "extimes"=>[]}], "warning_media"=>["email"], "critical_media"=>["sms", "email"], "warning_blackhole"=>false, "critical_blackhole"=>false}
+
+test_rule_json = '{
   "contact_id": "21",
   "entity_tags": [
     "database",
@@ -17,7 +19,21 @@ test_rule = '{
   ],
   "time_restrictions": [
     {
-      "TODO": "TODO"
+      "start_time": "2013-01-28 08:00:00",
+      "end_time": "2013-01-28 18:00:00",
+      "rrules": [
+        {
+          "validations": {
+            "day": [1,2,3,4,5]
+          },
+          "rule_type": "Weekly",
+          "interval": 1,
+          "week_start": 0
+        }
+      ],
+      "exrules": [],
+      "rtimes": [],
+      "extimes": []
     }
   ],
   "warning_media": [
@@ -38,10 +54,16 @@ puts "all contacts: " +
   Flapjack::Diner.contacts.inspect
 puts "a contact: " +
   Flapjack::Diner.contact('21').inspect
+
 puts "create a new notification rule: " +
   Flapjack::Diner.create_notification_rule!(test_rule).inspect
 puts "a contact's notification rules: " +
   Flapjack::Diner.notification_rules('21').inspect
+
+puts "notification_rules for a non-existant contact: " +
+  Flapjack::Diner.notification_rules('5432').inspect
+puts "last_error: " +
+  Flapjack::Diner.last_error.inspect
 
 rules = Flapjack::Diner.notification_rules('21')
 raise "no rules for this contact" if rules.empty?

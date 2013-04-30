@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+
+require 'flapjack-diner'
+require 'logger'
+require 'json'
+
+Flapjack::Diner.base_uri('http://127.0.0.1:4091/')
+Flapjack::Diner.logger = Logger.new("logs/flapjack_diner.log")
+
+rules = Flapjack::Diner.notification_rules('21')
+
+puts "Contact 21's #{rules.length} notification rules:"
+
+rules.each {|nr|
+  puts "#{nr['id']} e: #{nr['entities'].join(', ')}"
+}
+
+rule = rules.first
+id = rule['id']
+
+puts "Rule #{id}:"
+puts rule.inspect
+tr = '[
+      {
+        "start_time": "2013-01-28 08:00:00",
+        "end_time": "2013-01-28 18:00:00",
+        "rrules": [
+          {
+            "validations": {
+              "day": [1,2,3,4,5]
+            },
+            "rule_type": "Weekly",
+            "interval": 1,
+            "week_start": 0
+          }
+        ],
+        "exrules": [],
+        "rtimes": [],
+        "extimes": []
+      }
+    ]'
+
+puts "Setting time_restrictions"
+
+rule['time_restrictions'] = JSON.parse(tr)
+
+puts rule.inspect
+
+puts "Saving to flapjack"
+
+response = Flapjack::Diner.update_notification_rule!(id, rule)
+
+puts "Got the following response from flapjack:"
+
+puts response.inspect
+
+

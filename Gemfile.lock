@@ -1,18 +1,19 @@
 PATH
   remote: /Users/jesse/src/bulletproof/flapjack-diner
   specs:
-    flapjack-diner (0.9.1)
-      httparty
-      json
+    flapjack-diner (0.10)
+      httparty (>= 0.10)
+      json (>= 1.7.7)
 
 GEM
+  remote: https://rubygems.org/
   specs:
-    httparty (0.9.0)
+    httparty (0.11.0)
       multi_json (~> 1.0)
-      multi_xml
+      multi_xml (>= 0.5.2)
     json (1.7.7)
-    multi_json (1.6.1)
-    multi_xml (0.5.1)
+    multi_json (1.7.2)
+    multi_xml (0.5.3)
 
 PLATFORMS
   ruby
