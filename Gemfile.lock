@@ -1,7 +1,7 @@
 PATH
   remote: /Users/jesse/src/bulletproof/flapjack-diner
   specs:
-    flapjack-diner (0.10)
+    flapjack-diner (0.11)
       httparty (>= 0.10)
       json (>= 1.7.7)
 
