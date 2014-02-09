@@ -2,96 +2,152 @@
 
 require 'flapjack-diner'
 require 'logger'
+require 'securerandom'
 
-Flapjack::Diner.base_uri('http://127.0.0.1:4091/')
+def putsout(message)
+  puts "----"
+  puts message
+end
+
+def handle_response(diner_call)
+  unless diner_call
+    puts "Diner does not like that instruction. Error details follow:"
+    puts Flapjack::Diner.last_error.inspect
+    exit 1
+  end
+  puts "Response: #{diner_call}"
+  diner_call
+end
+
+Flapjack::Diner.base_uri('http://127.0.0.1:3081/')
 Flapjack::Diner.logger = Logger.new("logs/flapjack_diner.log")
 
-test_rule = {"contact_id"=>"21", "entity_tags"=>["database", "physical"], "entities"=>["localhost"], "time_restrictions"=>[{"start_time"=>"2013-01-28 08:00:00", "end_time"=>"2013-01-28 18:00:00", "rrules"=>[{"validations"=>{"day"=>[1, 2, 3, 4, 5]}, "rule_type"=>"Weekly", "interval"=>1, "week_start"=>0}], "exrules"=>[], "rtimes"=>[], "extimes"=>[]}], "warning_media"=>["email"], "critical_media"=>["sms", "email"], "warning_blackhole"=>false, "critical_blackhole"=>false}
+test_rule = {
+  "contact_id" => "21",
+  "tags"       => ["database", "physical"],
+  "entities"   => ["localhost"],
+  "time_restrictions" => [{
+    "start_time" => "2013-01-28 08:00:00",
+    "end_time"   => "2013-01-28 18:00:00",
+    "rrules" => [{
+      "validations" => { "day"=>[1, 2, 3, 4, 5] },
+      "rule_type"   => "Weekly",
+      "interval"    => 1,
+      "week_start"  => 0}],
+    "exrules" => [],
+    "rtimes"  => [],
+    "extimes" => []}],
+  "warning_media"      => ["email"],
+  "critical_media"     => ["sms", "email"],
+  "warning_blackhole"  => false,
+  "critical_blackhole" => false}
 
-test_rule_json = '{
-  "contact_id": "21",
-  "entity_tags": [
-    "database",
-    "physical"
-  ],
-  "entities": [
-    "localhost"
-  ],
-  "time_restrictions": [
-    {
-      "start_time": "2013-01-28 08:00:00",
-      "end_time": "2013-01-28 18:00:00",
-      "rrules": [
-        {
-          "validations": {
-            "day": [1,2,3,4,5]
-          },
-          "rule_type": "Weekly",
-          "interval": 1,
-          "week_start": 0
-        }
-      ],
-      "exrules": [],
-      "rtimes": [],
-      "extimes": []
-    }
-  ],
-  "warning_media": [
-    "email"
-  ],
-  "critical_media": [
-    "sms",
-    "email"
-  ],
-  "warning_blackhole": false,
-  "critical_blackhole": false
-}'
-test_email = '{
-  "address": "dmitri@example.com",
-  "interval": 900
-}'
-puts "all contacts: " +
-  Flapjack::Diner.contacts.inspect
-puts "a contact: " +
-  Flapjack::Diner.contact('21').inspect
+test_contact_no_media =
+  {
+    "first_name" => "Sausage",
+    "last_name"  => "Balana",
+    "email"      => "sausage@example.com",
+  }
 
-puts "create a new notification rule: " +
-  Flapjack::Diner.create_notification_rule!(test_rule).inspect
-puts "a contact's notification rules: " +
-  Flapjack::Diner.notification_rules('21').inspect
+putsout "create contact:"
+contact_id = handle_response(Flapjack::Diner.create_contacts!([test_contact_no_media])).first
 
-puts "notification_rules for a non-existant contact: " +
-  Flapjack::Diner.notification_rules('5432').inspect
-puts "last_error: " +
-  Flapjack::Diner.last_error.inspect
+putsout "all contacts:"
+handle_response(Flapjack::Diner.contacts)
 
-rules = Flapjack::Diner.notification_rules('21')
-raise "no rules for this contact" if rules.empty?
+putsout "a contact:"
+handle_response(Flapjack::Diner.contact(contact_id))
+
+# TODO: add entity creation and linking to contacts
+
+test_entity = {
+  "id"   => SecureRandom.uuid,
+  "name" => "foo-app-09.example.com"
+}
+
+putsout "create an entity:"
+handle_response(Flapjack::Diner.create_entities!([test_entity]))
+
+putsout "add an entity to a contact:"
+handle_response(Flapjack::Diner.add_entities_to_contact!(contact_id, [test_entity["id"]]))
+
+putsout "get the entities of a contact:"
+handle_response(Flapjack::Diner.get_entities_for_contacts([contact_id]))
+
+putsout "create a new notification rule:"
+test_rule["contact_id"] = contact_id
+handle_response(Flapjack::Diner.create_notification_rule!(test_rule))
+
+#putsout "notification_rules for a non-existant contact: " +
+#  Flapjack::Diner.notification_rules('5432').inspect
+#putsout "last_error: " +
+#  Flapjack::Diner.last_error.inspect
+
+putsout "a contact's notification rules:"
+rules = handle_response(Flapjack::Diner.notification_rules(contact_id))
+
+raise "no rules for this contact" unless rules
 rule_id = rules.last['id']
-puts "picking on rule with id: #{rule_id}"
 
-puts "a notification rule: " +
-  Flapjack::Diner.notification_rule(rule_id).inspect
-puts "update a notification rule: " +
-  Flapjack::Diner.update_notification_rule!(rule_id, test_rule).inspect
-puts "delete a notification rule: " +
-  Flapjack::Diner.delete_notification_rule!(rule_id).inspect
-puts "a contact's notification rules: " +
-  Flapjack::Diner.notification_rules('21').inspect
+putsout "getting a notification rule with id: #{rule_id}"
+handle_response(Flapjack::Diner.notification_rule(rule_id))
 
-puts "a contact's media: "
-  Flapjack::Diner.contact_media('21').inspect
-puts "update a contact's email media: "
-  Flapjack::Diner.update_contact_medium!('21', 'email', {:address => "dmitri@example.com", :interval => 900}).inspect
-puts "a contact's email media: "
-  Flapjack::Diner.contact_medium('21', 'email').inspect
-puts "delete a contact's email media: "
-  Flapjack::Diner.delete_contact_medium!('21', 'email').inspect
+putsout "update a notification rule:"
+handle_response(Flapjack::Diner.update_notification_rule!(rule_id, test_rule))
 
-puts "set a contact's timezone: " +
-  Flapjack::Diner.update_contact_timezone!('21', 'Australia/Adelaide').inspect
-puts "a contact's timezone: " +
-  Flapjack::Diner.contact_timezone('21').inspect
-puts "delete a contact's timezone: " +
-  Flapjack::Diner.delete_contact_timezone!('21').inspect
+putsout "delete a notification rule:"
+handle_response(Flapjack::Diner.delete_notification_rule!(rule_id))
+
+putsout "a contact's notification rules:"
+handle_response(Flapjack::Diner.notification_rules(contact_id))
+
+media_email = {
+  "type"             => "email",
+  "address"          => "foo@example.com",
+  "interval"         => 37,
+  "rollup_threshold" => 2,
+  "contact_id"       => contact_id
+}
+
+putsout "create media on a contact:"
+handle_response(Flapjack::Diner.create_media!([media_email]))
+
+putsout "a contact's media:"
+handle_response(Flapjack::Diner.contact_media(contact_id))
+
+putsout "update a contact's email media:"
+handle_response(Flapjack::Diner.update_contact_medium!(contact_id, 'email', {:address => "dmitri@example.com", :interval => 900}))
+
+putsout "a contact's email media:"
+handle_response(Flapjack::Diner.contact_medium('21', 'email'))
+
+putsout "delete a contact's email media:"
+handle_response(Flapjack::Diner.delete_contact_medium!('21', 'email'))
+
+putsout "add a contact's email media:"
+handle_response(Flapjack::Diner.update_contact_medium!('21', 'email', {:address => "ada@example.com", :interval => 300}))
+
+putsout "set a contact's timezone:"
+handle_response(Flapjack::Diner.update_contact_timezone!('21', 'Australia/Adelaide'))
+
+putsout "a contact's timezone:"
+handle_response(Flapjack::Diner.contact_timezone('21'))
+
+putsout "delete a contact's timezone:"
+handle_response(Flapjack::Diner.delete_contact_timezone!('21'))
+
+putsout "status on an entity that does not exist:"
+handle_response(Flapjack::Diner.status('foobar', :check => 'sausage'))
+
+putsout "status - old format - all checks - on client1-localhost-test-1:"
+handle_response(Flapjack::Diner.status('client1-localhost-test-1'))
+
+putsout "status - new format - all checks - on client1-localhost-test-1:" +
+handle_response(Flapjack::Diner.bulk_status(:entity => 'client1-localhost-test-1'))
+
+putsout "status - old format - PING on client1-localhost-test-1:"
+handle_response(Flapjack::Diner.status('client1-localhost-test-1', :check => 'PING'))
+
+putsout "status - new format - PING, SSH on client1-localhost-test-1:"
+handle_response(Flapjack::Diner.bulk_status(:check => {'client1-localhost-test-1' => ['PING', 'SSH']}))
 
